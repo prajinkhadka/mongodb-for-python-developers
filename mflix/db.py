@@ -263,16 +263,32 @@ def get_movie(id):
         """
 
         # TODO: Get Comments
-        # Implement the required pipeline.
-        pipeline = [
-            {
-                "$match": {
-                    "_id": ObjectId(id)
-                }
+        # match id 
+
+        match_stage= { "$match": { "_id": ObjectId(id) } }
+        lookup_stage = {
+            "$lookup": {
+                "from": 'comments',
+                "let": { 'id': '$_id' },
+                "pipeline": [
+                    { '$match':
+                        { '$expr': { '$eq': [ '$movie_id', '$$id' ] } }
+                    }
+                ],
+                "as": 'comments'
             }
+        }
+        pipeline = [
+            match_stage, lookup_stage
         ]
 
         movie = db.movies.aggregate(pipeline).next()
+
+        # sort comments by date before dispalying.
+        movie["comments"] = sorted(
+            movie.get("comments", []),
+            key=lambda x: x.get('date'), reverse=True
+        )
         return movie
 
     # TODO: Error Handling
