@@ -566,7 +566,23 @@ def most_active_commenters():
     """
     # TODO: User Report
     # Return the 20 users who have commented the most on MFlix.
-    pipeline = []
+    # The pipeline consist fo three tstages, 
+    groupStage = {
+        "$group": {
+            "_id": "$email", 
+            "count": {"$sum": 1}
+        }
+    }
+    sortStage = {
+        "$sort": {
+            "count": -1
+        }
+    }
+
+    limitStage = {
+        "$limit": 20
+    }
+    pipeline = [groupStage, sortStage, limitStage]
 
     rc = db.comments.read_concern # you may want to change this read concern!
     comments = db.comments.with_options(read_concern=rc)
